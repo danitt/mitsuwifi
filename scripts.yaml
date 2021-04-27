@@ -1,0 +1,11 @@
+allow:
+  - all
+
+scripts:
+  # vr start
+  start:
+    cmd: deno run src/index.ts
+  # vr watch
+  watch:
+    cmd: deno run src/index.ts
+    watch: true
