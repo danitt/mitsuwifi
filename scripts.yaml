@@ -5,6 +5,9 @@ scripts:
   # vr start
   start:
     cmd: deno run src/index.ts
+  # vr test
+  test:
+    cmd: deno test
   # vr watch
   watch:
     cmd: deno run src/index.ts
