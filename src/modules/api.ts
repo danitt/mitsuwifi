@@ -68,6 +68,7 @@ export async function login(): Promise<ILoginResponse> {
   setVar<StoreKeys, string>('cookie', cookie);
   
   const body = await response.json();
+  setVar<StoreKeys, ILoginResponse>('loginData', body);
   return body;
 }
 
@@ -95,4 +96,17 @@ export async function logout(): Promise<void> {
   if (body.status !== 'loggedout') {
     throw Error(`Error logging out, unexpected server response ${JSON.stringify(body)}`);
   }
+  deleteVar<StoreKeys>('loginData');
+}
+
+/**
+ * Get user login data, either from store or API
+ */
+export async function getLoginData(): Promise<ILoginResponse> {
+  const storeLoginData = getVar<StoreKeys, ILoginResponse>('loginData');
+  if (storeLoginData) {
+    return storeLoginData;
+  }
+  console.info('Authenticating user..');
+  return await login();
 }

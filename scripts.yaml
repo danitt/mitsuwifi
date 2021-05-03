@@ -8,6 +8,9 @@ scripts:
   # vr test
   test:
     cmd: deno test
+  # Tests API Authentication
+  test:auth:
+    cmd: deno test -- --auth
   # vr watch
   watch:
     cmd: deno run src/index.ts
