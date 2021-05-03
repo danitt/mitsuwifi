@@ -1,6 +1,6 @@
 import { APP_VERSION, MITSU_USERNAME, MITSU_PASSWORD } from '../environment.ts';
 import { deleteVar, getVar, hasVar, setVar } from '../utils/store.ts';
-import { ILoginResponse, ILogoutResponse } from "./api.types.ts";
+import { ILoginResponse, ILogoutResponse, IUnitCapabilities, IUnitState } from "./api.types.ts";
 
 // REST call points
 const BASE_URL = 'https://api.melview.net';
@@ -13,8 +13,12 @@ const UNIT_COMMAND_URL = `${BASE_URL}/api/unitcommand.aspx`;
 interface StoreApi {
   cookie: string;
   loginData: ILoginResponse;
+  units: IUnitCapabilities[];
 }
 type StoreKeys = keyof StoreApi;
+const getStoreCookie = (): string | undefined => getVar<StoreKeys, string>('cookie');
+const getStoreLoginData = (): ILoginResponse | undefined => getVar<StoreKeys, ILoginResponse>('loginData');
+const getStoreUnits = (): IUnitCapabilities[] | undefined => getVar<StoreKeys, IUnitCapabilities[]>('units');
 
 /**
  * Check if user is currently authenticated
@@ -28,11 +32,11 @@ export function checkAuth(): boolean {
  * 
  * Note: discards other headers .. YAGNI
  */
-async function fetchAuth(input: Request | URL | string, init?: RequestInit): Promise<Response> {
+async function fetchAuth<T = unknown>(input: Request | URL | string, init?: RequestInit): Promise<T> {
   if (!checkAuth()) {
     await login();
   }
-  const cookie = getVar<StoreKeys, string>('cookie');
+  const cookie = getStoreCookie();
   if (!cookie) {
     throw Error('Invalid or missing cookie');
   }
@@ -42,7 +46,16 @@ async function fetchAuth(input: Request | URL | string, init?: RequestInit): Pro
     ...init,
     headers,
   }
-  return await fetch(input, initWithCookie);
+  const result = await fetch(input, initWithCookie);
+  if (result.status !== 200) {
+    throw Error(`Query unsuccessful, status: ${result.status}`);
+  }
+  try {
+    return await result.json();
+  } catch (e) {
+    const text = await result.text();
+    throw Error(`Could not parse response JSON, text: ${text}`);
+  }
 }
 
 /**
@@ -103,10 +116,90 @@ export async function logout(): Promise<void> {
  * Get user login data, either from store or API
  */
 export async function getLoginData(): Promise<ILoginResponse> {
-  const storeLoginData = getVar<StoreKeys, ILoginResponse>('loginData');
+  const storeLoginData = getStoreLoginData();
   if (storeLoginData) {
     return storeLoginData;
   }
   console.info('Authenticating user..');
   return await login();
+}
+
+export async function getAllUnitCapabilities(): Promise<IUnitCapabilities[]> {
+  const loginData = await getLoginData();
+  const units: IUnitCapabilities[] = [];
+  for (let i = 0; loginData.userunits > i; i++) {
+    console.info('Getting unit idx', i);
+    try {
+      const unit = await getUnitCapabilities(i);
+      units.push(unit);
+    } catch (e) {
+      console.warn(`Could not fetch unit idx "${i}"`, e);
+    }
+  }
+  return units;
+}
+
+export async function getUnitCapabilities(unitIdx: number): Promise<IUnitCapabilities> {
+  const unit = await fetchAuth<IUnitCapabilities>(UNIT_CAPABILITIES_URL, {
+    body: JSON.stringify({ unitid: unitIdx }),
+  });
+
+  // Update store
+  const units = getStoreUnits() ?? [];
+  const existingUnitIdx = units.findIndex(u => u.id === unit.id);
+  if (existingUnitIdx !== -1) {
+    units[existingUnitIdx] = unit;
+  } else {
+    units.push(unit);
+  }
+  setVar<StoreKeys, IUnitCapabilities[]>('units', units);
+
+  return unit;
+}
+
+export async function getAllUnitStates(): Promise<IUnitState[]> {
+  const units = getStoreUnits() ?? [];
+  if (!units.length) {
+    throw Error('No units stored, please fetch unit capabilities');
+  }
+  const unitStates: IUnitState[] = [];
+  for (const unit of units) {
+    console.info('Fetching state for unit ID', unit.id);
+    try {
+      const unitState = await getUnitState(unit.id);
+      unitStates.push(unitState);
+    } catch (e) {
+      console.warn(`Could not fetch state for unit ID "${unit.id}"`, e);
+    }
+  }
+  return unitStates;
+}
+
+export async function getUnitState(unitId: string): Promise<IUnitState> {
+  const body = await fetchAuth<IUnitState>(UNIT_COMMAND_URL, {
+    body: JSON.stringify({ unitid: unitId, v: 2 }),
+  });
+  return body;
+}
+
+export async function updateUnitState(unitId: string, commands: string): Promise<IUnitState> {
+  const result = await fetchAuth<IUnitState>(UNIT_COMMAND_URL, {
+    body: JSON.stringify({ unitid: unitId, v: 2 , lc: 1, commands }),
+  });
+  return result;
+}
+
+export async function updateUnitStateLocal(unit: IUnitCapabilities, commands: string): Promise<void> {
+  const commandStr = [
+    '<?xml version="1.0" encoding="UTF-8"?><CSV><CONNECT>ON</CONNECT><CODE><VALUE>',
+    commands,
+    '</VALUE></CODE></CSV>',
+  ].join('');
+  const result = await fetch(`http://${unit.localip}/smart`, {
+    method: 'POST',
+    body: commandStr,
+  });
+  if (result.status !== 200) {
+    throw Error(`Could not send local command, status: ${result.status}`);
+  }
 }

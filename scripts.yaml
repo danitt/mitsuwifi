@@ -4,7 +4,7 @@ allow:
 scripts:
   # vr start
   start:
-    cmd: deno run src/index.ts
+    cmd: deno run src/index.ts --
   # vr test
   test:
     cmd: deno test
@@ -15,3 +15,16 @@ scripts:
   watch:
     cmd: deno run src/index.ts
     watch: true
+  # commands
+  getUserData:
+    cmd: deno run src/index.ts -- userData
+  getUnitCapabilities:
+    cmd: deno run src/index.ts -- unitCapabilities
+  getUnitStates:
+    cmd: deno run src/index.ts -- unitStates
+  allPowerOn:
+    cmd: deno run src/index.ts -- allPowerOn
+  allPowerOnLocal:
+    cmd: deno run src/index.ts -- allPowerOnLocal
+  allPowerOff:
+    cmd: deno run src/index.ts -- allPowerOff
