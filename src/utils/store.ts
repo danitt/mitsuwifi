@@ -4,18 +4,18 @@ const config = new Conf({
   projectName: 'mitsuwifi'
 });
 
-export function setVar<T = unknown>(name: string, value: T): void {
+export function setVar<Key extends string = string, Value = unknown>(name: Key, value: Value): void {
   config.set(name, value);
 }
 
-export function getVar<T = unknown>(name: string): T | undefined {
+export function getVar<Key extends string = string, Value = unknown>(name: Key): Value | undefined {
   return config.get(name, undefined);
 }
 
-export function hasVar(name: string): boolean {
+export function hasVar<Key extends string = string>(name: Key): boolean {
   return config.has(name);
 }
 
-export function deleteVar(name: string): void {
+export function deleteVar<Key extends string = string>(name: Key): void {
   config.delete(name);
 }

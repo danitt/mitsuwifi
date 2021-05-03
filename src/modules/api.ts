@@ -9,11 +9,18 @@ const LOGOUT_URL = `${BASE_URL}/api/logout.aspx`;
 const UNIT_CAPABILITIES_URL = `${BASE_URL}/api/unitcapabilities.aspx`;
 const UNIT_COMMAND_URL = `${BASE_URL}/api/unitcommand.aspx`;
 
+// Store Values
+interface StoreApi {
+  cookie: string;
+  loginData: ILoginResponse;
+}
+type StoreKeys = keyof StoreApi;
+
 /**
  * Check if user is currently authenticated
  */
 export function checkAuth(): boolean {
-  return hasVar('cookie');
+  return hasVar<StoreKeys>('cookie');
 }
 
 /**
@@ -25,7 +32,7 @@ async function fetchAuth(input: Request | URL | string, init?: RequestInit): Pro
   if (!checkAuth()) {
     await login();
   }
-  const cookie = getVar<string>('cookie');
+  const cookie = getVar<StoreKeys, string>('cookie');
   if (!cookie) {
     throw Error('Invalid or missing cookie');
   }
@@ -58,7 +65,7 @@ export async function login(): Promise<ILoginResponse> {
   if (!cookie) {
     throw Error(`Login unsuccessful, failed to retrieve cookie value`);
   }
-  setVar<string>('cookie', cookie);
+  setVar<StoreKeys, string>('cookie', cookie);
   
   const body = await response.json();
   return body;
@@ -82,7 +89,7 @@ export async function logout(): Promise<void> {
   if (!cookie) {
     throw Error(`Login unsuccessful, failed to retrieve cookie value`);
   }
-  deleteVar('cookie');
+  deleteVar<StoreKeys>('cookie');
 
   const body: ILogoutResponse = await response.json();
   if (body.status !== 'loggedout') {
