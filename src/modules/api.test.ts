@@ -1,4 +1,4 @@
-import { assert } from "https://deno.land/std@0.95.0/testing/asserts.ts";
+import { assert } from "https://deno.land/std@0.152.0/testing/asserts.ts";
 import { deleteVar } from '../utils/store.ts';
 import { checkAuth, getAllUnitCapabilities, getLoginData, login, logout } from './api.ts';
 

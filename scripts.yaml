@@ -5,13 +5,11 @@ scripts:
   # vr start
   start:
     cmd: deno run src/index.ts --
-  # vr test
   test:
     cmd: deno test
   # Tests API Authentication
   test:auth:
     cmd: deno test -- --auth
-  # vr watch
   watch:
     cmd: deno run src/index.ts
     watch: true

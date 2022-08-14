@@ -52,7 +52,7 @@ async function fetchAuth<T = unknown>(input: Request | URL | string, init?: Requ
   }
   try {
     return await result.json();
-  } catch (e) {
+  } catch {
     const text = await result.text();
     throw Error(`Could not parse response JSON, text: ${text}`);
   }
@@ -63,11 +63,12 @@ async function fetchAuth<T = unknown>(input: Request | URL | string, init?: Requ
  */
 export async function login(): Promise<ILoginResponse> {
   const response = await fetch(LOGIN_URL, {
+    method: "POST",
     body: JSON.stringify({
       appversion: APP_VERSION,
       user: MITSU_USERNAME,
       pass: MITSU_PASSWORD,
-    })
+    }),
   });
 
   if (response.status !== 200) {
@@ -90,9 +91,10 @@ export async function login(): Promise<ILoginResponse> {
  */
 export async function logout(): Promise<void> {
   const response = await fetch(LOGOUT_URL, {
+    method: "POST",
     body: JSON.stringify({
       appversion: APP_VERSION,
-    })
+    }),
   });
 
   if (response.status !== 200) {
@@ -110,6 +112,7 @@ export async function logout(): Promise<void> {
     throw Error(`Error logging out, unexpected server response ${JSON.stringify(body)}`);
   }
   deleteVar<StoreKeys>('loginData');
+
 }
 
 /**
@@ -141,7 +144,10 @@ export async function getAllUnitCapabilities(): Promise<IUnitCapabilities[]> {
 
 export async function getUnitCapabilities(unitIdx: number): Promise<IUnitCapabilities> {
   const unit = await fetchAuth<IUnitCapabilities>(UNIT_CAPABILITIES_URL, {
-    body: JSON.stringify({ unitid: unitIdx }),
+    method: 'POST',
+    body: JSON.stringify({
+      unitid: unitIdx,
+    }),
   });
 
   // Update store
@@ -177,6 +183,7 @@ export async function getAllUnitStates(): Promise<IUnitState[]> {
 
 export async function getUnitState(unitId: string): Promise<IUnitState> {
   const body = await fetchAuth<IUnitState>(UNIT_COMMAND_URL, {
+    method: "POST",
     body: JSON.stringify({ unitid: unitId, v: 2 }),
   });
   return body;
@@ -184,7 +191,8 @@ export async function getUnitState(unitId: string): Promise<IUnitState> {
 
 export async function updateUnitState(unitId: string, commands: string): Promise<IUnitState> {
   const result = await fetchAuth<IUnitState>(UNIT_COMMAND_URL, {
-    body: JSON.stringify({ unitid: unitId, v: 2 , lc: 1, commands }),
+    method: "POST",
+    body: JSON.stringify({ unitid: unitId, v: 2, lc: 1, commands }),
   });
   return result;
 }
