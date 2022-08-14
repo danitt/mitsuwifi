@@ -19,3 +19,7 @@ export function hasVar<Key extends string = string>(name: Key): boolean {
 export function deleteVar<Key extends string = string>(name: Key): void {
   config.delete(name);
 }
+
+export function deleteAllVars(): void {
+  config.clear();
+}

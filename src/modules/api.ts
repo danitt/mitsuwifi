@@ -1,11 +1,12 @@
 import { APP_VERSION, MITSU_USERNAME, MITSU_PASSWORD } from '../environment.ts';
 import { deleteVar, getVar, hasVar, setVar } from '../utils/store.ts';
-import { ILoginResponse, ILogoutResponse, IUnitCapabilities, IUnitState } from "./api.types.ts";
+import { IBuilding, ILoginResponse, ILogoutResponse, IUnit, IUnitCapabilities, IUnitState } from "./api.types.ts";
 
 // REST call points
 const BASE_URL = 'https://api.melview.net';
 const LOGIN_URL = `${BASE_URL}/api/login.aspx`;
 const LOGOUT_URL = `${BASE_URL}/api/logout.aspx`;
+const ROOMS_URL = `${BASE_URL}/api/rooms.aspx`;
 const UNIT_CAPABILITIES_URL = `${BASE_URL}/api/unitcapabilities.aspx`;
 const UNIT_COMMAND_URL = `${BASE_URL}/api/unitcommand.aspx`;
 
@@ -127,26 +128,38 @@ export async function getLoginData(): Promise<ILoginResponse> {
   return await login();
 }
 
-export async function getAllUnitCapabilities(): Promise<IUnitCapabilities[]> {
-  const loginData = await getLoginData();
-  const units: IUnitCapabilities[] = [];
-  for (let i = 0; loginData.userunits > i; i++) {
-    console.info('Getting unit idx', i);
-    try {
-      const unit = await getUnitCapabilities(i);
+export async function getAllBuildings(): Promise<IBuilding[]> {
+  return await fetchAuth<IBuilding[]>(ROOMS_URL, {
+    method: 'GET',
+  });
+}
+
+export async function getAllUnits(): Promise<IUnit[]> {
+  const buildings = await getAllBuildings();
+  const units: IUnit[] = [];
+  for (const building of buildings) {
+    for (const unit of building.units) {
       units.push(unit);
-    } catch (e) {
-      console.warn(`Could not fetch unit idx "${i}"`, e);
     }
   }
   return units;
 }
 
-export async function getUnitCapabilities(unitIdx: number): Promise<IUnitCapabilities> {
+export async function getAllUnitCapabilities(): Promise<IUnitCapabilities[]> {
+  const units = await getAllUnits();
+  const unitCapabilities: IUnitCapabilities[] = [];
+  for (const unit of units) {
+    const capabilities = await getUnitCapabilities(unit.unitid);
+    unitCapabilities.push(capabilities);
+  }
+  return unitCapabilities;
+}
+
+export async function getUnitCapabilities(unitId: string): Promise<IUnitCapabilities> {
   const unit = await fetchAuth<IUnitCapabilities>(UNIT_CAPABILITIES_URL, {
     method: 'POST',
     body: JSON.stringify({
-      unitid: unitIdx,
+      unitid: unitId,
     }),
   });
 

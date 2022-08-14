@@ -1,6 +1,7 @@
 import { parse } from "https://deno.land/std@0.95.0/flags/mod.ts";
 import { getAllUnitCapabilities, updateUnitState, getAllUnitStates, getLoginData, updateUnitStateLocal } from "./modules/api.ts";
 import { CAPABILITIES } from './constants/capabilities.const.ts'
+import { deleteAllVars } from "./utils/store.ts";
 
 const args = parse(Deno.args)._ || [];
 
@@ -53,4 +54,8 @@ if (args.includes('allPowerOff')) {
       console.error(`Error switching on unit id${unit.id}`, e);
     }
   }
+}
+
+if (args.includes('clearStore')) {
+  deleteAllVars();
 }

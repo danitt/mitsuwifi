@@ -26,3 +26,5 @@ scripts:
     cmd: deno run src/index.ts -- allPowerOnLocal
   allPowerOff:
     cmd: deno run src/index.ts -- allPowerOff
+  clearStore:
+    cmd: deno run src/index.ts -- clearStore

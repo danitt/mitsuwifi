@@ -1,6 +1,6 @@
 import { config } from "https://deno.land/x/dotenv@v3.2.0/mod.ts";
 
-export const APP_VERSION = '3.0.513';
+export const APP_VERSION = "6.3.1685";
 
 // Import & validate env vars
 export const {

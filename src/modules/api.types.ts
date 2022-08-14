@@ -24,6 +24,25 @@ export interface ILogoutResponse {
   status: 'loggedout';
 }
 
+export interface IBuilding {
+  buildingid: string;
+  building: "Building" | string;
+  bschedule: string;
+  units: IUnit[];
+}
+
+export interface IUnit {
+  room: string /*e.g. "Living Room" **/;
+  unitid: string /* e.g. "170145" **/;
+  power: "on" | "q";
+  wifi: "3";
+  mode: "1" | "8" | string;
+  temp: string /* e.g. "25" **/;
+  settemp: string /* e.g. "25" **/;
+  status: string;
+  schedule1: number;
+}
+
 export interface IUnitCapabilities {
   id: string;
   unitname: string;
