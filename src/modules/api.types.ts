@@ -31,12 +31,21 @@ export interface IBuilding {
   units: IUnit[];
 }
 
+export type Mode =
+  | "1" /* Heat */
+  | "2" /* Dry */
+  | "3" /* Cool */
+  | "7" /* Fan */
+  | "8" /* Auto */;
 export interface IUnit {
   room: string /*e.g. "Living Room" **/;
   unitid: string /* e.g. "170145" **/;
-  power: "on" | "q";
-  wifi: "3";
-  mode: "1" | "8" | string;
+  power: "on" | "q" /* "q": off, "on": on **/;
+  wifi: "3" /**
+    "3" seems to mean good?
+    @TODO wait for connectivity issue to capture failed state
+    */;
+  mode: Mode;
   temp: string /* e.g. "25" **/;
   settemp: string /* e.g. "25" **/;
   status: string;
@@ -75,7 +84,7 @@ export interface IUnitCapabilities {
 
 export interface IUnitState {
   id: string;
-  power: number;
+  power: number /** 0: off, 1: on */;
   standby: number;
   setmode: number;
   automode: number;
